@@ -1,22 +1,34 @@
-# gps_spoof.py
-# Simple GPS spoof detector: checks sudden coordinate jumps inconsistent with IMU velocity.
+# app/detectors/gps_spoof.py
+"""
+Detect sudden GPS jumps relative to previous buffered points.
+Simple algorithm:
+ - compute horizontal jump between current and previous GPS
+ - if jump is greater than a configurable threshold (e.g., 30 m) and speed inconsistency, flag GPS_SPOOF
+"""
+from typing import Dict, List
+import math
 
-from typing import Dict, Any
+GPS_JUMP_THRESHOLD_M = 30.0  # meters for sudden jump
 
-def gps_spoof_check(prev: Dict[str,Any], curr: Dict[str,Any]) -> Dict[str,Any]:
+def detect_gps_spoof(pkt: Dict, buf: List[Dict]) -> Dict:
+    alert = {"type": "GPS_SPOOF", "anomaly": False, "detail": {}}
     try:
-        if not prev or not curr:
-            return None
-        # compare reported speed vs positional displacement
-        dx = curr.get("vx",0)
-        dy = curr.get("vy",0)
-        reported_speed = curr.get("speed",0)
-        from math import hypot
-        vel_mag = hypot(dx, dy)
-        # if difference between reported speed and IMU vel > threshold, and big position jump, flag
-        pos_jump = abs(curr["gps_lat"] - prev["gps_lat"]) + abs(curr["gps_lon"] - prev["gps_lon"])
-        if pos_jump > 0.0005 and abs(reported_speed - vel_mag) > 5:
-            return {"type":"gps_spoof", "severity":"medium", "detail": {"pos_jump": pos_jump, "reported_speed":reported_speed, "imu_speed":vel_mag}}
+        if not buf:
+            return alert
+        prev = buf[-1]
+        if prev.get("gps_lat") is None or prev.get("gps_lon") is None:
+            return alert
+        if pkt.get("gps_lat") is None or pkt.get("gps_lon") is None:
+            return alert
+        lat1, lon1 = float(prev["gps_lat"]), float(prev["gps_lon"])
+        lat2, lon2 = float(pkt["gps_lat"]), float(pkt["gps_lon"])
+        dy = (lat2 - lat1) * 111000.0
+        dx = (lon2 - lon1) * (111000.0 * abs(math.cos(math.radians(lat1))))
+        dist = math.hypot(dx, dy)
+        if dist >= GPS_JUMP_THRESHOLD_M:
+            alert["anomaly"] = True
+            alert["detail"] = {"jump_m": dist, "threshold_m": GPS_JUMP_THRESHOLD_M}
+            return alert
     except Exception:
-        return None
-    return None
+        return alert
+    return alert

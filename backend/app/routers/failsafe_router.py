@@ -1,11 +1,28 @@
-# failsafe_router.py
 from fastapi import APIRouter
-from ..state.failsafe_state import FailsafeState
+from ..state.failsafe_state import get_failsafe, activate_failsafe, reset_failsafe
+from ..websocket_handlers.ws_frontend import broadcast_to_frontend
 
 router = APIRouter()
 
-# main.py will inject failsafe_state into app.state
-@router.get("/pi/failsafe-state")
-async def get_failsafe_state(request):
-    fs = request.app.state.failsafe_state
-    return {"status":"ok", "failsafe": {"active": fs.active, "reason": fs.reason}}
+@router.get("/failsafe/state")
+def read_failsafe():
+    return get_failsafe()
+
+@router.post("/failsafe/activate")
+async def activate():
+    fs = activate_failsafe(reason="operator")
+    # broadcast to frontends (best-effort)
+    try:
+        await broadcast_to_frontend({"type":"failsafe", "failsafe":fs})
+    except Exception:
+        pass
+    return {"status":"ok", "failsafe": fs}
+
+@router.post("/failsafe/reset")
+async def reset():
+    fs = reset_failsafe()
+    try:
+        await broadcast_to_frontend({"type":"failsafe", "failsafe":fs})
+    except Exception:
+        pass
+    return {"status":"ok", "failsafe": fs}

@@ -1,21 +1,24 @@
-# failsafe_state.py
-import threading
-from typing import Dict, Any
+# app/state/failsafe_state.py
+import time
+from typing import Optional, Dict
 
-class FailsafeState:
-    def __init__(self):
-        self.lock = threading.Lock()
-        self.active = False
-        self.reason = ""
-        self.history = []
+_failsafe = {
+    "active": False,
+    "activated_at": None,
+    "reason": None
+}
 
-    def activate(self, reason: str):
-        with self.lock:
-            self.active = True
-            self.reason = reason
-            self.history.append({"ts": __import__("time").time(), "reason": reason})
+def activate(reason: Optional[str] = None):
+    _failsafe["active"] = True
+    _failsafe["activated_at"] = time.time()
+    _failsafe["reason"] = reason
+    return dict(_failsafe)
 
-    def reset(self):
-        with self.lock:
-            self.active = False
-            self.reason = ""
+def deactivate():
+    _failsafe["active"] = False
+    _failsafe["activated_at"] = None
+    _failsafe["reason"] = None
+    return dict(_failsafe)
+
+def get_state() -> Dict:
+    return dict(_failsafe)

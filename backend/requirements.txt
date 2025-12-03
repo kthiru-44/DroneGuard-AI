@@ -1,6 +1,15 @@
-fastapi==0.103.0
-uvicorn==0.22.0
-pydantic==2.5.1
-numpy==1.27.1
+fastapi==0.110.0
+uvicorn[standard]==0.29.0
+python-dotenv==1.0.0
+
+# Pydantic v2 (compatible trio)
+pydantic==2.7.4
+pydantic-core==2.18.4
+pydantic-settings==2.3.1
+
+# WebSocket + ASGI
 websockets==11.0.3
-zeroconf==0.131.0
+starlette==0.36.3
+
+# HTTP client
+requests==2.31.0

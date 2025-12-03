@@ -1,16 +1,20 @@
-# telemetry_buffer.py
+# app/state/telemetry_buffer.py
 from collections import deque
-import threading
+from ..config import MAX_TELEMETRY_BUFFER
 
-class TelemetryBuffer:
-    def __init__(self, maxlen=1024):
-        self.buf = deque(maxlen=maxlen)
-        self.lock = threading.Lock()
+telemetry_buffer = deque(maxlen=MAX_TELEMETRY_BUFFER)
 
-    def push(self, item):
-        with self.lock:
-            self.buf.append(item)
+def add(pkt: dict):
+    telemetry_buffer.append(pkt)
 
-    def snapshot(self):
-        with self.lock:
-            return list(self.buf)
+def get_buffer():
+    # return newest-first to be consistent with frontend expectations
+    return list(reversed(telemetry_buffer))
+
+def latest():
+    if telemetry_buffer:
+        return telemetry_buffer[-1]
+    return None
+
+def clear():
+    telemetry_buffer.clear()

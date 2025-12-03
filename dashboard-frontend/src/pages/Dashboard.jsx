@@ -1,58 +1,103 @@
+// src/pages/Dashboard.jsx
+
 import React from "react";
-import MapView from "../components/MapView";
-import IMUGauge from "../components/IMUGauge";
-import AlertsPanel from "../components/AlertsPanel";
-import Charts from "../components/Charts";
-import StatusBar from "../components/StatusBar";
+import NeonCard from "../components/NeonCard";
+import MiniMap from "../components/MiniMap";
+import { useTelemetry } from "../hooks/useTelemetry";
 
-export default function Dashboard({ telemetry, status, failsafe, alerts }) {
+export default function Dashboard() {
+  const { telemetry, alerts, failsafe } = useTelemetry();
+  const last = telemetry[0];
+
   return (
-    <div className="space-y-6">
+    <div className="grid grid-cols-3 gap-6">
+      {/* LEFT 2/3 */}
+      <section className="col-span-2">
+        {/* OVERVIEW CARD */}
+        <NeonCard>
+          <h3 className="text-lg font-semibold text-neonCyan">Overview</h3>
 
-      <div className="card-glass p-4 rounded-2xl">
-        <div className="flex justify-between items-center">
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">DroneGuard AI</h1>
-            <p className="text-sm text-slate-500">
-              Real-time telemetry & intrusion protection
-            </p>
-          </div>
-          <div className="text-sm text-slate-500">
-            Points: <span>{telemetry.length}</span>
-          </div>
-        </div>
-
-        <div className="mt-4 grid grid-cols-1 lg:grid-cols-3 gap-4">
-          <div className="col-span-2">
-            <MapView telemetry={telemetry} />
-          </div>
-
-          <div className="space-y-4">
-            <div className="card-glass p-3 rounded-xl">
-              <h4 className="text-sm font-semibold">Live IMU</h4>
-              <IMUGauge telemetry={telemetry} />
+          <div className="mt-4 grid grid-cols-2 gap-4">
+            {/* IMU ------------------------------------------------- */}
+            <div>
+              <div className="text-sm text-white/60">Live IMU</div>
+              <div className="mt-2 text-white">
+                <div>Roll: {last?.roll ?? "--"}</div>
+                <div>Pitch: {last?.pitch ?? "--"}</div>
+                <div>Yaw: {last?.yaw ?? "--"}</div>
+                <div>Battery: {last?.raw?.battery ?? "--"}</div>
+              </div>
             </div>
 
-            <div className="card-glass p-3 rounded-xl">
-              <h4 className="text-sm font-semibold">Latest Alerts</h4>
-              <AlertsPanel alerts={alerts} compact />
+            {/* ALERTS ------------------------------------------------- */}
+            <div>
+              <div className="text-sm text-white/60">Latest Alerts</div>
+              <div className="mt-2 text-white/80">
+                {alerts.length === 0 ? (
+                  "No alerts yet."
+                ) : (
+                  <ul className="list-disc pl-5 space-y-2">
+                    {alerts.slice(0, 6).map((a, i) => (
+                      <li key={i}>
+                        {a.type} —{" "}
+                        {a.detail?.message ??
+                          JSON.stringify(a.detail ?? a).slice(0, 40)}
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </div>
+        </NeonCard>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="card-glass p-4 rounded-2xl">
-          <h3 className="text-sm font-semibold mb-3">Altitude</h3>
-          <Charts telemetry={telemetry} metric="altitude" />
-        </div>
+        {/* FLIGHT PATH + MINI MAP ------------------------------------------------- */}
+        <div className="mt-6">
+          <NeonCard>
+            <h4 className="font-semibold text-neonCyan mb-3">Flight Path</h4>
 
-        <div className="card-glass p-4 rounded-2xl">
-          <h3 className="text-sm font-semibold mb-3">Yaw</h3>
-          <Charts telemetry={telemetry} metric="yaw" />
+            <div className="h-80 w-full">
+              <MiniMap />
+            </div>
+          </NeonCard>
         </div>
-      </div>
+      </section>
 
+      {/* RIGHT SIDEBAR 1/3 */}
+      <aside>
+        {/* FAILSAFE STATE ------------------------------------------------- */}
+        <NeonCard>
+          <div className="text-sm">Failsafe</div>
+          <div className="mt-2 text-white">
+            {failsafe?.active
+              ? `Active (${failsafe.reason})`
+              : "Inactive"}
+          </div>
+        </NeonCard>
+
+        {/* CONTROLS ------------------------------------------------- */}
+        <div className="mt-4">
+          <NeonCard>
+            <div className="text-sm">Controls</div>
+            <div className="mt-2">
+              <button
+                className="px-3 py-2 rounded bg-neonPink text-black"
+                onClick={() => {
+                  // this button only triggers toast unless you wire real API
+                  fetch("http://127.0.0.1:8000/failsafe/activate", {
+                    method: "POST",
+                  })
+                    .then((res) => res.json())
+                    .then(() => toast.success("Kill-switch activated"))
+                    .catch(() => toast.error("Kill-switch request failed"));
+                }}
+              >
+                Activate Kill-switch
+              </button>
+            </div>
+          </NeonCard>
+        </div>
+      </aside>
     </div>
   );
 }

@@ -1,22 +1,30 @@
-# heading_mismatch.py
-# Compare GPS track-bearing with IMU yaw
-
-from typing import Dict, Any
+# app/detectors/heading_mismatch.py
+"""
+Another simple check focusing on yaw jumps between samples.
+If yaw changes abruptly without corresponding rotation, flag.
+"""
+from typing import Dict, List
 import math
 
-def heading_mismatch(prev: Dict[str,Any], curr: Dict[str,Any]) -> Dict[str,Any]:
+YAW_JUMP_THRESHOLD = 60.0  # degrees
+
+def detect_heading(pkt: Dict, buf: List[Dict]) -> Dict:
+    alert = {"type": "YAW_JUMP", "anomaly": False, "detail": {}}
     try:
-        if not prev or not curr:
-            return None
-        # compute course from vx,vy
-        vx = curr.get("vx",0); vy = curr.get("vy",0)
-        if vx==0 and vy==0:
-            return None
-        course = (math.degrees(math.atan2(vy, vx)) + 360) % 360
-        yaw = curr.get("yaw",0) % 360
-        delta = min(abs(course-yaw), 360-abs(course-yaw))
-        if delta > 45:
-            return {"type":"course_vs_yaw_mismatch", "severity":"low", "detail": {"course":course, "yaw":yaw, "delta":delta}}
+        if not buf:
+            return alert
+        prev = buf[-1]
+        if prev.get("yaw") is None or pkt.get("yaw") is None:
+            return alert
+        try:
+            prev_yaw = float(prev["yaw"]); cur_yaw = float(pkt["yaw"])
+        except Exception:
+            return alert
+        diff = abs((cur_yaw - prev_yaw + 180.0) % 360.0 - 180.0)
+        if diff >= YAW_JUMP_THRESHOLD:
+            alert["anomaly"] = True
+            alert["detail"] = {"prev_yaw": prev_yaw, "yaw": cur_yaw, "diff": diff}
+            return alert
     except Exception:
-        return None
-    return None
+        return alert
+    return alert

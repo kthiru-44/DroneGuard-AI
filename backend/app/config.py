@@ -1,13 +1,6 @@
-# config.py - safe defaults for local-only demo
-from typing import Final
+# app/config.py
+WS_FRONTEND_PATH = "/ws/frontend"
+WS_PI_PATH = "/ws/pi"
 
-HOST: Final[str] = "127.0.0.1"   # local-only by default
-PORT: Final[int] = 8000
-
-# Safety: by default do not allow remote attack commands.
-# If you intentionally want to allow LAN (for a controlled demo), change to True
-# and understand the legal and ethical implications.
-ALLOW_REMOTE_ATTACKS: Final[bool] = False
-
-MDNS_SERVICE_NAME: Final[str] = "droneguard-demo-local"  # only for local demos (not advertised externally)
-MDNS_HOSTNAME: Final[str] = "droneguard.local"
+MAX_TELEMETRY_BUFFER = 1000
+ALERT_BROADCAST_LIMIT = 500

@@ -1,36 +1,19 @@
-
-# attack_router.py - safe, local-only attack endpoints (demo)
-from fastapi import APIRouter, HTTPException, Request
-from typing import Dict, Any
+from fastapi import APIRouter
+from ..state.attack_state import add_attack, clear_attacks, is_attacking, get_attacks
 
 router = APIRouter()
 
-# in-memory attack state (simple)
-_attack_state = {"active": False, "mode": None, "params": {}}
+@router.get("/pi/attack-state")
+def pi_attack_state():
+    return {"status": "ok", "active": bool(is_attacking()), "attacks": get_attacks()}
 
 @router.post("/attack")
-async def attack(request: Request):
-    """
-    Demo-only endpoint to mark an attack as active and store params.
-    This does NOT itself reach out to other devices. The local drone simulator polls /pi/attack-state to see the attack
-    and changes its own simulated telemetry.
-    """
-    q = dict(request.query_params)
-    mode = q.get("mode")
-    if not mode:
-        raise HTTPException(status_code=400, detail="mode param required")
-    _attack_state["active"] = True
-    _attack_state["mode"] = mode
-    _attack_state["params"] = q
-    return {"status":"ok", "attack": _attack_state}
+def attack(mode: str = None, mag: float = 1.0, style: str = "sudden", dur: int = 10):
+    entry = {"mode": mode, "mag": mag, "style": style, "dur": dur}
+    e = add_attack(entry)
+    return {"status": "ok", "received": e}
 
 @router.post("/attack/clear")
-async def clear_attack():
-    _attack_state["active"] = False
-    _attack_state["mode"] = None
-    _attack_state["params"] = {}
-    return {"status":"ok", "cleared": True}
-
-@router.get("/pi/attack-state")
-async def attack_state():
-    return {"status":"ok", "attack": dict(_attack_state)}
+def clear_attack():
+    clear_attacks()
+    return {"status": "ok", "cleared": True}
