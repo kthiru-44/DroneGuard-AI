@@ -1,6 +1,0 @@
-{
-    "GPS_SPOOF": "HOLD",
-    "IMU_HEADING_MISMATCH": "LAND",
-    "IMPOSSIBLE_MOVEMENT": "LAND",
-    "GPS_JAMMING": "HOLD"
-}

@@ -1,43 +1,82 @@
+# ws_pi.py - handle incoming websocket telemetry from Pi
 import json
-from fastapi import APIRouter, WebSocket
+import asyncio
+from fastapi import WebSocket
 
-from ..state.telemetry_buffer import add, get_buffer
-from ..detectors.physics_check import detect_physics
-from ..detectors.gps_spoof import detect_gps_spoof
-from ..detectors.imu_consistency import detect_imu
-from ..detectors.heading_mismatch import detect_heading
+from ..state.telemetry_buffer import TelemetryBuffer
+from ..state.failsafe_state import FailsafeState
 
-from ..failsafe.failsafe_engine import evaluate_failsafe
-from ..state.failsafe_state import get_failsafe
+# shared in-memory state (backend main will provide)
+# this module expects main.py to set container attributes
 
-from .ws_frontend import broadcast_to_frontend   # <--- MUST BE HERE
-
-router = APIRouter()
-
-@router.websocket("/ws/pi")
-async def ws_pi(websocket: WebSocket):
+async def handle_pi_ws(websocket: WebSocket, shared):
     await websocket.accept()
+    tb: TelemetryBuffer = shared["telemetry_buffer"]
+    front_clients = shared["front_clients"]
+    failsafe: FailsafeState = shared["failsafe_state"]
 
-    while True:
-        raw = await websocket.receive_text()
-        data = json.loads(raw)
-        pkt = data["payload"]
+    prev = None
+    try:
+        while True:
+            text = await websocket.receive_text()
+            try:
+                data = json.loads(text)
+            except Exception:
+                # malformed payload: ignore
+                continue
+            # attach
+            tb.push(data)
+            # run detectors defensively
+            alerts = []
+            from ..detectors.physics_check import physics_check
+            from ..detectors.gps_spoof import gps_spoof_check
+            from ..detectors.imu_consistency import imu_consistency
+            from ..detectors.heading_mismatch import heading_mismatch
 
-        add(pkt)
-        buf = get_buffer()
+            for fn in (physics_check, gps_spoof_check, imu_consistency, heading_mismatch):
+                try:
+                    a = fn(prev, data)
+                    if a:
+                        alerts.append(a)
+                except Exception:
+                    # never crash
+                    continue
 
-        alerts = []
-        for detector in [detect_physics, detect_gps_spoof, detect_imu, detect_heading]:
-            result = detector(pkt, buf)
-            if result["anomaly"]:
-                alerts.append(result)
+            # evaluate failsafe decision
+            from ..failsafe.failsafe_engine import evaluate_alerts
+            decision = evaluate_alerts(alerts)
+            if decision.get("activate"):
+                failsafe.activate(decision.get("reason","auto"))
+                # broadcast failsafe message to frontends
+                payload = {"type":"failsafe", "payload":{"active":True, "reason":failsafe.reason}}
+                # broadcast
+                for ws in list(front_clients):
+                    try:
+                        await ws.send_text(json.dumps(payload))
+                    except Exception:
+                        pass
 
-        failsafe_result = evaluate_failsafe(alerts)
-        failsafe_state = get_failsafe()
+            # broadcast telemetry to frontends
+            tmsg = {"type":"telemetry", "payload": data}
+            for ws in list(front_clients):
+                try:
+                    await ws.send_text(json.dumps(tmsg))
+                except Exception:
+                    # ignore failures
+                    pass
 
-        await broadcast_to_frontend({
-            "type": "telemetry",
-            "payload": pkt,
-            "alerts": alerts,
-            "failsafe": failsafe_state
-        })
+            # broadcast alerts if any
+            if alerts:
+                amsg = {"type":"alert", "payload": alerts}
+                for ws in list(front_clients):
+                    try:
+                        await ws.send_text(json.dumps(amsg))
+                    except Exception:
+                        pass
+
+            prev = data
+    except Exception:
+        try:
+            await websocket.close()
+        except Exception:
+            pass

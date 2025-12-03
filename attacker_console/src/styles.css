@@ -1,29 +1,105 @@
-:root{
-  --navy:#0b2545;
-  --danger:#d9534f;
-  --muted:#666;
-  --bg:#ffffff;
-  --card:#f7f9fc;
+/* ------------------------------ */
+/* NEON HACKER MODE UI THEME      */
+/* ------------------------------ */
+
+body {
+  font-family: "JetBrains Mono", monospace;
+  background: #000000;
+  color: #00ffea;
+  padding: 40px;
 }
-*{box-sizing:border-box;font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial;}
-body{margin:0;background:var(--bg);color:#111}
-.header{display:flex;align-items:center;justify-content:space-between;background:var(--navy);padding:14px 20px;color:#fff}
-.header h1{margin:0;font-size:18px}
-.header-right{background:#fff;color:var(--navy);padding:6px 10px;border-radius:6px;font-weight:600}
-.container{display:flex;gap:18px;padding:18px}
-.left{flex:2}
-.right{flex:1}
-.card{background:var(--card);padding:14px;border-radius:10px;margin-bottom:14px;box-shadow:0 2px 6px rgba(0,0,0,0.04)}
-.bigbtn{width:100%;padding:16px;border-radius:8px;border:0;font-weight:700;font-size:16px;cursor:pointer}
-.attack-btn{background:var(--danger);color:#fff}
-.control-row{display:flex;gap:8px;align-items:center;margin-top:8px}
-.input{padding:8px;border-radius:6px;border:1px solid #ddd;width:100%}
-.small{width:120px}
-.label{font-size:13px;color:var(--muted);margin-bottom:6px}
-.footer{padding:12px;text-align:center;color:var(--muted)}
-.preset-row{display:flex;gap:8px}
-.preset-btn{padding:8px;border-radius:6px;border:1px solid #ddd;background:#fff;cursor:pointer}
-.status-dot{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:8px;vertical-align:middle}
-.log-item{padding:8px;border-bottom:1px solid #eee;font-size:13px}
-.map-placeholder{height:220px;background:#e9eef7;border-radius:8px;display:flex;align-items:center;justify-content:center;color:var(--muted)}
-.warning{background:#fff3f3;border-left:6px solid var(--danger);padding:10px;border-radius:6px;margin-bottom:12px}
+
+/* Header */
+h1 {
+  font-size: 34px;
+  text-shadow: 0 0 12px #00fff2;
+  margin-bottom: 25px;
+}
+
+/* Container */
+.console-container {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Base button style */
+.btn {
+  padding: 12px 22px;
+  border-radius: 8px;
+  font-size: 16px;
+  cursor: pointer;
+  border: 1px solid #00ffe1;
+  color: #00ffe1;
+  background: rgba(0, 0, 0, 0.4);
+  transition: 0.25s ease;
+  box-shadow: 0 0 10px rgba(0,255,224,0.2);
+}
+
+/* Button hover neon glow */
+.btn:hover {
+  box-shadow: 0 0 18px #00fff2;
+  transform: translateY(-2px);
+}
+
+/* Button press */
+.btn:active {
+  transform: scale(0.92);
+}
+
+/* Attack button neon red */
+.attack-btn {
+  border-color: #ff005a;
+  color: #ff005a;
+  box-shadow: 0 0 10px rgba(255, 0, 90, 0.4);
+}
+
+.attack-btn:hover {
+  box-shadow: 0 0 20px #ff005a;
+}
+
+/* Clear button */
+.clear-btn {
+  border-color: #ffffff88;
+  color: #ffffffdd;
+}
+
+/* Search button (neon blue) */
+.search-btn {
+  border-color: #009dff;
+  color: #009dff;
+  width: 260px;
+  margin-top: 10px;
+  align-self: flex-start;
+  box-shadow: 0 0 12px rgba(0,140,255,0.3);
+}
+
+.search-btn:hover {
+  box-shadow: 0 0 22px #009dff;
+}
+
+/* ----------------------------------------- */
+/* ANIMATED ACTIVE ATTACK BANNER (NEON RED)  */
+/* ----------------------------------------- */
+.active-banner {
+  width: 100%;
+  padding: 14px;
+  text-align: center;
+  font-weight: 700;
+  font-size: 20px;
+  color: #ff003c;
+  border: 2px solid #ff003c;
+  border-radius: 8px;
+  margin-bottom: 10px;
+
+  background: rgba(30,0,0,0.6);
+  box-shadow: 0 0 15px #ff003c;
+
+  /* Pulse animation */
+  animation: pulseGlow 1.2s infinite alternate;
+}
+
+@keyframes pulseGlow {
+  from { box-shadow: 0 0 12px #ff003c; }
+  to   { box-shadow: 0 0 30px #ff003c; }
+}

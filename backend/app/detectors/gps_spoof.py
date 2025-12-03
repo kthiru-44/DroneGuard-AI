@@ -1,20 +1,22 @@
-from .physics_check import distance_m
+# gps_spoof.py
+# Simple GPS spoof detector: checks sudden coordinate jumps inconsistent with IMU velocity.
 
-def detect_gps_spoof(pkt, buf):
-    if len(buf) < 3:
-        return {"anomaly": False}
+from typing import Dict, Any
 
-    p1 = buf[-3]
-    p2 = buf[-2]
-
-    if p1["gps_lat"] is None or p2["gps_lat"] is None or pkt["gps_lat"] is None:
-        return {"anomaly": False}
-
-    d2 = distance_m(p2["gps_lat"], p2["gps_lon"],
-                    pkt["gps_lat"], pkt["gps_lon"])
-
-    if d2 > 20:
-        return {"anomaly": True, "type": "GPS_SPOOF", "distance_jump": d2,
-                "reason": "sudden GPS change"}
-
-    return {"anomaly": False}
+def gps_spoof_check(prev: Dict[str,Any], curr: Dict[str,Any]) -> Dict[str,Any]:
+    try:
+        if not prev or not curr:
+            return None
+        # compare reported speed vs positional displacement
+        dx = curr.get("vx",0)
+        dy = curr.get("vy",0)
+        reported_speed = curr.get("speed",0)
+        from math import hypot
+        vel_mag = hypot(dx, dy)
+        # if difference between reported speed and IMU vel > threshold, and big position jump, flag
+        pos_jump = abs(curr["gps_lat"] - prev["gps_lat"]) + abs(curr["gps_lon"] - prev["gps_lon"])
+        if pos_jump > 0.0005 and abs(reported_speed - vel_mag) > 5:
+            return {"type":"gps_spoof", "severity":"medium", "detail": {"pos_jump": pos_jump, "reported_speed":reported_speed, "imu_speed":vel_mag}}
+    except Exception:
+        return None
+    return None

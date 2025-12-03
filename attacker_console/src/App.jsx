@@ -1,72 +1,97 @@
-import React, { useState, useEffect, useCallback } from 'react'
-import ConnectionStatus from './components/ConnectionStatus'
-import AttackPanel from './components/AttackPanel'
-import Logs from './components/Logs'
-import { testConnectivity } from './utils/api'
+import React, { useState } from "react";
+import { postAttack, clearAttack } from "./utils/api";
+import "./styles.css"; // make sure neon CSS is imported
 
 export default function App() {
-  const [backendUrl, setBackendUrl] = useState(() => {
-    return localStorage.getItem('BACKEND_URL') || 'http://localhost:8000'
-  })
-  const [connected, setConnected] = useState(false)
-  const [lastSeen, setLastSeen] = useState(null)
-  const [logs, setLogs] = useState([])
+  const [activeAttack, setActiveAttack] = useState(null);
 
-  const pushLog = useCallback((entry) => {
-    setLogs((s) => [entry, ...s].slice(0, 200))
-  }, [])
+  const backend = localStorage.getItem("BACKEND_URL") || "http://127.0.0.1:8000";
 
-  useEffect(() => {
-    const interval = setInterval(async () => {
-      try {
-        const res = await testConnectivity(backendUrl)
-        setConnected(true)
-        setLastSeen(new Date().toLocaleTimeString())
-        pushLog({ ts: new Date().toISOString(), type: 'connect', msg: `Ping OK: ${res}` })
-      } catch (err) {
-        setConnected(false)
-        pushLog({ ts: new Date().toISOString(), type: 'error', msg: `Ping fail: ${err.message}` })
+  const send = async (mode) => {
+    if (!confirm(`Trigger ${mode}? This is a local-only demo.`)) return;
+
+    try {
+      const res = await postAttack(backend, { mode });
+
+      // Set banner
+      setActiveAttack(mode);
+
+      alert("Attack posted (local demo): " + JSON.stringify(res));
+    } catch (e) {
+      alert("Error: " + e.message);
+    }
+  };
+
+  const clearAll = async () => {
+    if (!confirm("Clear attacks?")) return;
+
+    try {
+      await clearAttack(backend);
+      setActiveAttack(null); // remove banner
+      alert("Cleared");
+    } catch (e) {
+      alert("Error: " + e.message);
+    }
+  };
+
+  const autoDiscover = async () => {
+    const guess = "http://127.0.0.1:8000";
+
+    try {
+      const r = await fetch(guess + "/.well-known/ready");
+      if (r.ok) {
+        localStorage.setItem("BACKEND_URL", guess);
+        alert("Found local control center");
+      } else {
+        alert("Not found locally");
       }
-    }, 6000)
-    return () => clearInterval(interval)
-  }, [backendUrl, pushLog])
+    } catch (e) {
+      alert("Not found locally");
+    }
+  };
 
   return (
-    <div className="app">
-      <header className="header">
-        <h1>DroneGuard — Attacker Console (SIMULATION)</h1>
-      </header>
+    <div className="console-container">
+      <h1>Attacker Console — Neon Hacker Mode</h1>
 
-      <main className="container">
-        <section className="left">
-          <ConnectionStatus
-            backendUrl={backendUrl}
-            onSave={(url) => {
-              setBackendUrl(url)
-              localStorage.setItem('BACKEND_URL', url)
-            }}
-            connected={connected}
-            lastSeen={lastSeen}
-            pushLog={pushLog}
-          />
+      {/* 🔥 ACTIVE ATTACK BANNER */}
+      {activeAttack && (
+        <div className="active-banner">
+          ACTIVE ATTACK: {activeAttack}
+        </div>
+      )}
 
-          <AttackPanel backendUrl={backendUrl} pushLog={pushLog} />
-        </section>
+      {/* Attack Buttons */}
+      <div>
+        <button className="btn attack-btn" onClick={() => send("GPS_SPOOF")}>
+          GPS Spoof
+        </button>
 
-        <aside className="right">
-          <Logs logs={logs} onClear={() => setLogs([])} onExport={() => {
-            const blob = new Blob([JSON.stringify(logs, null, 2)], { type: 'application/json' })
-            const url = URL.createObjectURL(blob)
-            const a = document.createElement('a')
-            a.href = url
-            a.download = 'attacker-logs.json'
-            a.click()
-            URL.revokeObjectURL(url)
-          }} />
-        </aside>
-      </main>
+        <button className="btn attack-btn" onClick={() => send("SPEED_SURGE")}>
+          Speed Surge
+        </button>
 
-      <footer className="footer">Press keys 1..5 to trigger quick attacks</footer>
+        <button className="btn attack-btn" onClick={() => send("DEST_HIJACK")}>
+          Dest Hijack
+        </button>
+
+        <button className="btn attack-btn" onClick={() => send("YAW_SPIKE")}>
+          Yaw Spike
+        </button>
+
+        <button className="btn attack-btn" onClick={() => send("SLOW_DRIFT")}>
+          Slow Drift
+        </button>
+
+        <button className="btn clear-btn" onClick={clearAll}>
+          Clear
+        </button>
+      </div>
+
+      {/* Auto Discover */}
+      <button className="btn search-btn" onClick={autoDiscover}>
+        Search Control Center (local)
+      </button>
     </div>
-  )
+  );
 }

@@ -1,10 +1,16 @@
+# telemetry_buffer.py
 from collections import deque
-from ..config import MAX_BUFFER_SIZE
+import threading
 
-telemetry_buffer = deque(maxlen=MAX_BUFFER_SIZE)
+class TelemetryBuffer:
+    def __init__(self, maxlen=1024):
+        self.buf = deque(maxlen=maxlen)
+        self.lock = threading.Lock()
 
-def add(pkt):
-    telemetry_buffer.append(pkt)
+    def push(self, item):
+        with self.lock:
+            self.buf.append(item)
 
-def get_buffer():
-    return list(telemetry_buffer)
+    def snapshot(self):
+        with self.lock:
+            return list(self.buf)

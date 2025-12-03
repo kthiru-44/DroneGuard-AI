@@ -1,23 +1,21 @@
-# backend/app/state/failsafe_state.py
+# failsafe_state.py
+import threading
+from typing import Dict, Any
 
-# This file stores the drone's failsafe state in memory.
-# Other modules import these functions.
+class FailsafeState:
+    def __init__(self):
+        self.lock = threading.Lock()
+        self.active = False
+        self.reason = ""
+        self.history = []
 
-failsafe_state = {
-    "action": "NONE",   # can be NONE / HOLD / LAND / KILL
-    "reason": None
-}
+    def activate(self, reason: str):
+        with self.lock:
+            self.active = True
+            self.reason = reason
+            self.history.append({"ts": __import__("time").time(), "reason": reason})
 
-def get_failsafe():
-    """Return current failsafe state."""
-    return failsafe_state
-
-def set_failsafe(action: str, reason: str = None):
-    """Update failsafe state."""
-    failsafe_state["action"] = action
-    failsafe_state["reason"] = reason
-
-def reset_failsafe():
-    """Reset failsafe back to normal."""
-    failsafe_state["action"] = "NONE"
-    failsafe_state["reason"] = None
+    def reset(self):
+        with self.lock:
+            self.active = False
+            self.reason = ""

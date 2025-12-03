@@ -1,16 +1,11 @@
+# failsafe_router.py
 from fastapi import APIRouter
-from ..state.failsafe_state import get_failsafe, reset_failsafe
+from ..state.failsafe_state import FailsafeState
 
 router = APIRouter()
 
-@router.get("/failsafe/state")
-def read_failsafe():
-    return get_failsafe()
-
-@router.post("/failsafe/reset")
-def reset():
-    reset_failsafe()
-    return {"status": "reset"}
-
-# IMPORTANT: FastAPI uses this name
-failsafe_router = router
+# main.py will inject failsafe_state into app.state
+@router.get("/pi/failsafe-state")
+async def get_failsafe_state(request):
+    fs = request.app.state.failsafe_state
+    return {"status":"ok", "failsafe": {"active": fs.active, "reason": fs.reason}}
