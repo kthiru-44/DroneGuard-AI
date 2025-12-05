@@ -1,0 +1,91 @@
+########################################
+# GLOBAL IGNORE (Root)
+########################################
+
+# Environment variables
+.env
+.env.*
+*.env
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE / Editor
+.vscode/
+.idea/
+*.swp
+
+########################################
+# PYTHON BACKEND (backend/)
+########################################
+
+# Virtual environments
+venv/
+env/
+ENV/
+backend/venv/
+backend/env/
+
+# Python cache + compiled files
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Python build + logs
+backend/*.log
+
+########################################
+# FRONTEND (dashboard_frontend/)
+########################################
+
+# Node Modules
+node_modules/
+dashboard_frontend/node_modules/
+attacker_console/node_modules/
+
+# Lock files
+package-lock.json
+dashboard_frontend/package-lock.json
+attacker_console/package-lock.json
+
+# Dist / Build output
+dashboard_frontend/dist/
+dashboard_frontend/build/
+
+attacker_console/dist/
+attacker_console/build/
+
+########################################
+# ATTACKER CONSOLE (Node scripts)
+########################################
+
+attacker_console/*.log
+
+########################################
+# GENERAL BUILD OUTPUT
+########################################
+
+dist/
+build/
+coverage/
+
+########################################
+# LOGS
+########################################
+
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+########################################
+# TEMP FILES
+########################################
+
+*.tmp
+*.temp
+*.bak
+*.cache
