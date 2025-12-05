@@ -8,7 +8,7 @@ export default function App() {
   const backend = localStorage.getItem("BACKEND_URL") || "http://127.0.0.1:8000";
 
   const send = async (mode) => {
-    if (!confirm(`Trigger ${mode}? This is a local-only demo.`)) return;
+    if (!confirm(`Trigger ${mode}?`)) return;
 
     try {
       const res = await postAttack(backend, { mode });
@@ -16,7 +16,7 @@ export default function App() {
       // Set banner
       setActiveAttack(mode);
 
-      alert("Attack posted (local demo): " + JSON.stringify(res));
+      alert("Attack posted : " + JSON.stringify(res));
     } catch (e) {
       alert("Error: " + e.message);
     }
@@ -51,47 +51,35 @@ export default function App() {
   };
 
   return (
-    <div className="console-container">
-      <h1>Attacker Console — Neon Hacker Mode</h1>
+  <div className="console-container">
 
-      {/* 🔥 ACTIVE ATTACK BANNER */}
-      {activeAttack && (
-        <div className="active-banner">
-          ACTIVE ATTACK: {activeAttack}
-        </div>
-      )}
+    <h1>ATTACKER CONSOLE</h1>
 
-      {/* Attack Buttons */}
-      <div>
-        <button className="btn attack-btn" onClick={() => send("GPS_SPOOF")}>
-          GPS Spoof
-        </button>
-
-        <button className="btn attack-btn" onClick={() => send("SPEED_SURGE")}>
-          Speed Surge
-        </button>
-
-        <button className="btn attack-btn" onClick={() => send("DEST_HIJACK")}>
-          Dest Hijack
-        </button>
-
-        <button className="btn attack-btn" onClick={() => send("YAW_SPIKE")}>
-          Yaw Spike
-        </button>
-
-        <button className="btn attack-btn" onClick={() => send("SLOW_DRIFT")}>
-          Slow Drift
-        </button>
-
-        <button className="btn clear-btn" onClick={clearAll}>
-          Clear
-        </button>
+    {/* 🔥 ACTIVE ATTACK BANNER */}
+    {activeAttack && (
+      <div className="active-banner">
+        ACTIVE ATTACK: {activeAttack}
       </div>
+    )}
 
-      {/* Auto Discover */}
-      <button className="btn search-btn" onClick={autoDiscover}>
-        Search Control Center (local)
+    {/* ⭐ CENTERED SEARCH BUTTON */}
+    <div className="center-wrapper">
+      <button className="btn search-btn big-search" onClick={autoDiscover}>
+        Search Drone Console
       </button>
     </div>
+
+    {/* ⭐ ATTACK BUTTON GROUP — CENTERED BELOW */}
+    <div className="attack-panel">
+      <button className="btn attack-btn" onClick={() => send("GPS_SPOOF")}>GPS Spoof</button>
+      <button className="btn attack-btn" onClick={() => send("SPEED_SURGE")}>Speed Surge</button>
+      <button className="btn attack-btn" onClick={() => send("DEST_HIJACK")}>Dest Hijack</button>
+      <button className="btn attack-btn" onClick={() => send("YAW_SPIKE")}>Yaw Spike</button>
+      <button className="btn attack-btn" onClick={() => send("SLOW_DRIFT")}>Slow Drift</button>
+
+      <button className="btn clear-btn" onClick={clearAll}>Clear</button>
+    </div>
+
+  </div>
   );
 }

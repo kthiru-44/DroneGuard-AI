@@ -5,4 +5,4 @@ router = APIRouter()
 
 @router.get("/.well-known/ready")
 async def ready():
-    return {"status":"ok", "service": "DroneGuard (local demo)"}
+    return {"status":"ok", "service": "DroneGuard"}
