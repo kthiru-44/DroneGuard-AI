@@ -5,7 +5,9 @@ from typing import Optional, Dict
 _failsafe = {
     "active": False,
     "activated_at": None,
-    "reason": None
+    "reason": None,
+    "auto_mode": False
+    
 }
 
 def activate(reason: Optional[str] = None):
@@ -21,4 +23,8 @@ def deactivate():
     return dict(_failsafe)
 
 def get_state() -> Dict:
+    return dict(_failsafe)
+
+def set_auto_mode(enabled: bool):
+    _failsafe["auto_mode"] = enabled
     return dict(_failsafe)
