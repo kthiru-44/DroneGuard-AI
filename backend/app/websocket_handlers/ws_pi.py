@@ -9,6 +9,7 @@ from ..detectors.heading_mismatch import detect_heading
 from ..failsafe.failsafe_engine import evaluate_failsafe
 from ..state.failsafe_state import get_state as get_failsafe_state
 from .ws_frontend import broadcast_to_frontend
+from app.security.signature_verify import verify_signature
 
 router = APIRouter()
 
@@ -29,6 +30,21 @@ async def ws_pi(websocket: WebSocket):
             pkt = message.get("payload") if isinstance(message, dict) else None
             if not pkt or not isinstance(pkt, dict):
                 continue
+
+            # ---------------------------
+            # SIGNATURE VERIFICATION HERE
+            # ---------------------------
+            if not verify_signature(pkt):
+                # Reject telemetry from attacker or tampered source
+                await broadcast_to_frontend({
+                    "type": "signature_fail",
+                    "reason": "Invalid signature — telemetry rejected",
+                    "raw": pkt
+                })
+                continue
+            # If valid → pass
+            # ---------------------------
+
 
             # store telemetry
             add_telemetry(pkt)
@@ -52,6 +68,7 @@ async def ws_pi(websocket: WebSocket):
             await broadcast_to_frontend({
                 "type": "telemetry",
                 "payload": pkt,
+                "verified": True,    # 🔥 Add this line
                 "alerts": alerts,
                 "failsafe_eval": failsafe_eval,
                 "failsafe": failsafe_state
