@@ -34,21 +34,35 @@ export default function App() {
     }
   };
 
-  const autoDiscover = async () => {
-    const guess = "http://127.0.0.1:8000";
+const autoDiscover = async () => {
+  console.log("[mDNS] Trying DGBackend.local ...");
 
-    try {
-      const r = await fetch(guess + "/.well-known/ready");
-      if (r.ok) {
-        localStorage.setItem("BACKEND_URL", guess);
-        alert("Found local control center");
-      } else {
-        alert("Not found locally");
-      }
-    } catch (e) {
-      alert("Not found locally");
+  const guess = "http://DGBackend.local:8000";
+
+  try {
+    const r = await fetch(guess + "/.well-known/ready", { timeout: 2000 });
+
+    if (r.ok) {
+      localStorage.setItem("BACKEND_URL", guess);
+      alert("Connected → DGBackend detected via mDNS");
+      return;
     }
-  };
+  } catch (e) {
+    console.log("mDNS direct lookup failed, trying fallback scan...");
+  }
+
+  // Fallback — old method
+  const fallback = "http://127.0.0.1:8000";
+  try {
+    const r = await fetch(fallback + "/.well-known/ready");
+    if (r.ok) {
+      localStorage.setItem("BACKEND_URL", fallback);
+      alert("Connected locally (fallback mode)");
+    }
+  } catch (e) {
+    alert("No backend found.");
+  }
+};
 
   return (
   <div className="console-container">

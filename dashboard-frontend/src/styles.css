@@ -8,6 +8,30 @@
   --neon-pink: #ff2d95;
   --neon-purple: #a048ff;
 }
+.verify {
+  margin-left: 10px;
+  padding: 3px 8px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: bold;
+}
+
+.verify.pending {
+  background: #444;
+  color: #eee;
+}
+
+.verify.good {
+  background: #00ffdd;
+  color: black;
+  box-shadow: 0 0 10px #00ffdd;
+}
+
+.verify.bad {
+  background: #ff0044;
+  color: white;
+  box-shadow: 0 0 12px #ff0044;
+}
 
 body {
   @apply bg-cyberBg;
